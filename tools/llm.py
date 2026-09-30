@@ -37,12 +37,15 @@ def ask(prompt, max_tokens=500):
 
 
 def shop_assistant(user_msg, shop_context=""):
-    """Dukaan ke assistant ke tor par jawab do (Roman Urdu)."""
+    """Dukaan ke MAALIK (Azhar) ke assistant ke tor par jawab do (Roman Urdu).
+    Ye chat customer ke liye NAHI — Azhar apne agents ko yahan se hukam deta hai."""
     prompt = (
         "Tum Imran Electric Store (Mandian, Abbottabad) ke AI assistant 'Munshi' ho. "
-        "Hamesha Roman Urdu me jawab do, mukhtasir aur dukandaar wale andaz me. "
+        "Tum se baat karne wala CUSTOMER nahi, dukaan ka MAALIK Azhar hai — "
+        "woh tumhe aur tumhare 12 agents ko hukam deta hai. "
+        "Hamesha Roman Urdu me jawab do, mukhtasir aur kaam ki baat. "
         "Qeematein aur stock ke bare me sirf wohi batao jo context me diya gaya hai — guess mat karo.\n\n"
         f"Context: {shop_context}\n\n"
-        f"Customer: {user_msg}\nMunshi:"
+        f"Azhar (maalik): {user_msg}\nMunshi:"
     )
     return ask(prompt)
