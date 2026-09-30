@@ -26,9 +26,12 @@ ADMIN_PATTERNS = [
 
 
 def identify_customer(sender):
-    """sender = phone ya naam. Returns customer_id ya None."""
+    """sender = phone ya naam. Returns customer_id ya None.
+    'web'/'owner' sender = Azhar (maalik) khud — customer nahi."""
     if not sender:
         return None
+    if sender in ("web", "owner"):
+        return "owner"
     c = customer_by_phone(sender)
     if c:
         return c["id"]
@@ -84,7 +87,7 @@ def handle_message(sender, text):
         if cands and (cands[0]["_score"] >= 2 or len(cands) == 1):
             product_id = cands[0]["id"]
 
-    cid = customer_id or 0  # 0 = unknown walk-in
+    cid = customer_id if customer_id not in (None, "owner") else 0  # 0 = unknown walk-in; "owner" = Azhar khud
     if agent_name == "billing":
         return billing_agent.handle(cid, text)
     if agent_name == "ledger":
