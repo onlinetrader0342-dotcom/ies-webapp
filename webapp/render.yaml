@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: ies-webapp
+    runtime: python
+    buildCommand: pip install -r webapp/requirements.txt
+    startCommand: gunicorn -w 2 --chdir /opt/render/project/src webapp.app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
