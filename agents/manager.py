@@ -71,49 +71,13 @@ def route(text):
 
 
 def handle_message(sender, text):
-    """Ek paigham ka mukammal jawab. Returns Roman Urdu string."""
-    customer_id = identify_customer(sender)
-    agent_name, intent = route(text)
-
-    if agent_name == "pricing" and intent == "admin":
-        return _handle_admin(text)
-
-    # product nikalne ki koshish (agar product wali baat hai)
-    product_id = None
-    if intent in ("product", "order", "discount"):
-        import tools.pricing as pricing
-        cands = pricing.find_product(text)
-        # behtareen match wazeh ho to wahi lo (score >= 2 ya waahid umeedwar)
-        if cands and (cands[0]["_score"] >= 2 or len(cands) == 1):
-            product_id = cands[0]["id"]
-
-    cid = customer_id if customer_id not in (None, "owner") else 0  # 0 = unknown walk-in; "owner" = Azhar khud
-    if agent_name == "billing":
-        return billing_agent.handle(cid, text)
-    if agent_name == "ledger":
-        return ledger_agent.handle(cid, text)
-    if agent_name == "inventory":
-        return inventory_agent.handle(text)
-    if agent_name == "staff":
-        return staff_agent.handle(text)
-    if agent_name == "reports":
-        return reports_agent.handle(text)
-    if agent_name == "rules":
-        return rules_agent.handle(text)
-    if agent_name == "expense":
-        return expense_agent.handle(text)
-    if agent_name == "planning":
-        return planning_agent.handle(text)
-    if agent_name == "supplier":
-        return supplier_agent.rate_request_draft(
-            _extract_product_id(text) or 0)
-    reply = inquiry_agent.handle(cid if cid else None, product_id, text)
-    # LLM fallback: agar deterministic system samajh na paya to AI se pucho
-    if "Samajh nahi aaya" in reply:
-        llm_reply = _llm_fallback(text)
-        if llm_reply:
-            return llm_reply
-    return reply
+    """Ek paigham ka mukammal jawab. Returns Roman Urdu string.
+    Ab TAMAM jawab AI agent (Gemini + tools) deta hai — koi template nahi."""
+    from tools.llm import agent_reply
+    reply = agent_reply(text)
+    if reply:
+        return reply
+    return "Maazrat, is waqt AI jawab nahi de saka. Dobara koshish karein."
 
 
 def _llm_fallback(text):
