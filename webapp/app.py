@@ -131,5 +131,14 @@ def api_chat():
 def health():
     return "ok"
 
+@app.get("/api/dump")
+def api_dump():
+    """DB backup download (secret key se protected)."""
+    if request.args.get("key") != os.environ.get("BACKUP_KEY", ""):
+        return "unauthorized", 403
+    from flask import send_file
+    return send_file(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "db", "shop.db"),
+                     as_attachment=True, download_name="shop.db")
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
