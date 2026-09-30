@@ -104,7 +104,32 @@ def handle_message(sender, text):
     if agent_name == "supplier":
         return supplier_agent.rate_request_draft(
             _extract_product_id(text) or 0)
-    return inquiry_agent.handle(cid if cid else None, product_id, text)
+    reply = inquiry_agent.handle(cid if cid else None, product_id, text)
+    # LLM fallback: agar deterministic system samajh na paya to AI se pucho
+    if "Samajh nahi aaya" in reply:
+        llm_reply = _llm_fallback(text)
+        if llm_reply:
+            return llm_reply
+    return reply
+
+
+def _llm_fallback(text):
+    """Deterministic system fail ho to free Gemini model se jawab."""
+    try:
+        from tools.llm import shop_assistant
+        from tools.db import connect
+        con = connect()
+        try:
+            n = con.execute("SELECT COUNT(*) c FROM products").fetchone()["c"]
+            low = con.execute(
+                "SELECT COUNT(*) c FROM stock WHERE quantity<=10").fetchone()["c"]
+        finally:
+            con.close()
+        ctx = (f"Dukaan me {n} products hain. {low} products me stock kam hai. "
+               "Main qeematein nahi janta — customer ko general rehnumai do.")
+        return shop_assistant(text, ctx)
+    except Exception:
+        return None
 
 
 def _extract_product_id(text):
