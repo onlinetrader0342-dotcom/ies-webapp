@@ -45,7 +45,7 @@ td:first-child,th:first-child{text-align:left}
 <nav>
 <button id="t-dash" class="on" onclick="tab('dash')">📊 Hisab</button>
 <button id="t-stock" onclick="tab('stock')">📦 Maal</button>
-<button id="t-chat" onclick="tab('chat')">💬 Munshi</button>
+<button id="t-chat" onclick="tab('chat')">🎛️ Agents</button>
 </nav>
 <main>
 <div id="p-dash">
@@ -59,8 +59,8 @@ td:first-child,th:first-child{text-align:left}
   <div id="stable"></div>
 </div>
 <div id="p-chat" class="hidden">
-  <div id="chatlog"><div class="msg munshi">Walaikum Assalam Azhar bhai! Main Munshi hoon. Rate, stock, bill — jo puchna hai pucho.</div></div>
-  <div class="row"><input id="qin" placeholder="Munshi se pucho..." onkeydown="if(event.key==='Enter')send()"><button id="qbtn" onclick="send()">Bhejo</button></div>
+  <div id="chatlog"><div class="msg munshi">Walaikum Assalam Azhar bhai! Hukam dein — rate, stock, bill, khata, report, ya kisi agent ko kaam.</div></div>
+  <div class="row"><input id="qin" placeholder="Agent ko hukam dein... (jaise: 12W bulb ka rate, aaj ki report)" onkeydown="if(event.key==='Enter')send()"><button id="qbtn" onclick="send()">Bhejo</button></div>
 </div>
 </main>
 <script>
