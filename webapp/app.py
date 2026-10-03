@@ -120,12 +120,18 @@ def api_dash():
 
 @app.post("/api/chat")
 def api_chat():
+    import time
+    t0 = time.time()
     msg = (request.json or {}).get("message", "")
+    t1 = time.time()
     try:
         reply = manager.handle_message("web", msg)
     except Exception as e:
         reply = f"Munshi ulajh gaya: {e}"
-    return jsonify({"reply": reply})
+    t2 = time.time()
+    return jsonify({"reply": reply,
+                    "_t": {"parse": round(t1 - t0, 2),
+                           "handle": round(t2 - t1, 2)}})
 
 @app.get("/health")
 def health():
