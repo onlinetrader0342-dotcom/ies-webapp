@@ -192,6 +192,12 @@ def api_diag():
 
 @app.post("/api/chat")
 def api_chat():
+    # CANARY: fori jawab, kuch kiye baghair
+    return jsonify({"reply": "canary-ok", "_canary": True})
+
+
+@app.post("/api/chat2")
+def api_chat2():
     import time
     t0 = time.time()
     msg = (request.json or {}).get("message", "")
