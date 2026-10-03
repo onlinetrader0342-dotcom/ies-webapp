@@ -118,86 +118,8 @@ def api_dash():
         "low": low, "products": prod,
     })
 
-@app.get("/api/diag")
-def api_diag():
-    """Render se Gemini API tak rasta + agent stages test karo."""
-    import time, json as _json, urllib.request, urllib.error, os
-    rep = {}
-    t0 = time.time()
-    key = os.environ.get("GEMINI_API_KEY", "")
-    rep["key_present"] = bool(key)
-
-    # stage 1: seedha urlopen, timeout 10
-    url = ("https://generativelanguage.googleapis.com/v1beta/models/"
-           "gemini-3-flash-preview:generateContent?key=" + key)
-    payload = {"contents": [{"parts": [{"text": "salam"}]}]}
-    req = urllib.request.Request(url, data=_json.dumps(payload).encode(),
-                                 headers={"Content-Type": "application/json"})
-    try:
-        r = urllib.request.urlopen(req, timeout=10)
-        rep["direct"] = {"status": r.status, "t": round(time.time() - t0, 2)}
-    except Exception as e:
-        rep["direct"] = {"error": f"{type(e).__name__}", "t": round(time.time() - t0, 2)}
-
-    # stage 2: tools.llm import
-    t1 = time.time()
-    try:
-        from tools.llm import agent_reply, _call_api
-        rep["import_llm"] = {"ok": True, "t": round(time.time() - t1, 2)}
-    except Exception as e:
-        rep["import_llm"] = {"error": f"{type(e).__name__}: {e}", "t": round(time.time() - t1, 2)}
-        return jsonify(rep)
-
-    # stage 3: _call_api (thread wala)
-    t2 = time.time()
-    try:
-        d = _call_api({"contents": [{"parts": [{"text": "salam"}]}]})
-        rep["call_api"] = {"ok": bool(d), "t": round(time.time() - t2, 2)}
-    except Exception as e:
-        rep["call_api"] = {"error": f"{type(e).__name__}: {str(e)[:100]}", "t": round(time.time() - t2, 2)}
-
-    # stage 4: agent_reply
-    t3 = time.time()
-    try:
-        rpl = agent_reply("salam")
-        rep["agent_reply"] = {"ok": bool(rpl), "t": round(time.time() - t3, 2),
-                              "reply": (rpl or "")[:120]}
-    except Exception as e:
-        rep["agent_reply"] = {"error": f"{type(e).__name__}: {str(e)[:100]}", "t": round(time.time() - t3, 2)}
-
-    # stage 5: tool-calling message (product_rate tool)
-    t4 = time.time()
-    try:
-        rpl2 = agent_reply("12W blub ka rate batao")
-        rep["agent_reply_tool"] = {"ok": bool(rpl2), "t": round(time.time() - t4, 2),
-                                   "reply": (rpl2 or "")[:200]}
-    except Exception as e:
-        rep["agent_reply_tool"] = {"error": f"{type(e).__name__}: {str(e)[:100]}",
-                                    "t": round(time.time() - t4, 2)}
-
-    # stage 6: full handle_message (jaise /api/chat karta hai)
-    t5 = time.time()
-    try:
-        from agents import manager
-        rpl3 = manager.handle_message("web", "12W blub ka rate batao")
-        rep["handle_message"] = {"ok": bool(rpl3), "t": round(time.time() - t5, 2),
-                                  "reply": (rpl3 or "")[:200]}
-    except Exception as e:
-        rep["handle_message"] = {"error": f"{type(e).__name__}: {str(e)[:100]}",
-                                  "t": round(time.time() - t5, 2)}
-
-    rep["total_t"] = round(time.time() - t0, 2)
-    return jsonify(rep)
-
-
 @app.post("/api/chat")
 def api_chat():
-    # CANARY: fori jawab, kuch kiye baghair
-    return jsonify({"reply": "canary-ok", "_canary": True})
-
-
-@app.post("/api/chat2")
-def api_chat2():
     import time
     t0 = time.time()
     msg = (request.json or {}).get("message", "")
