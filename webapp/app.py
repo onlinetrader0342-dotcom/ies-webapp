@@ -118,6 +118,35 @@ def api_dash():
         "low": low, "products": prod,
     })
 
+@app.get("/api/diag")
+def api_diag():
+    """Render se Gemini API tak rasta test karo. Returns JSON report."""
+    import time, json as _json, urllib.request, urllib.error, os
+    rep = {}
+    t0 = time.time()
+    key = os.environ.get("GEMINI_API_KEY", "")
+    rep["key_present"] = bool(key)
+    rep["key_len"] = len(key)
+    # 1) seedha urlopen, timeout 10
+    url = ("https://generativelanguage.googleapis.com/v1beta/models/"
+           "gemini-3-flash-preview:generateContent?key=" + key)
+    payload = {"contents": [{"parts": [{"text": "salam"}]}]}
+    req = urllib.request.Request(url, data=_json.dumps(payload).encode(),
+                                 headers={"Content-Type": "application/json"})
+    try:
+        r = urllib.request.urlopen(req, timeout=10)
+        rep["direct"] = {"status": r.status,
+                         "time": round(time.time() - t0, 2)}
+    except urllib.error.HTTPError as e:
+        rep["direct"] = {"http_error": e.code,
+                         "time": round(time.time() - t0, 2)}
+    except Exception as e:
+        rep["direct"] = {"error": f"{type(e).__name__}: {str(e)[:120]}",
+                         "time": round(time.time() - t0, 2)}
+    rep["total_time"] = round(time.time() - t0, 2)
+    return jsonify(rep)
+
+
 @app.post("/api/chat")
 def api_chat():
     import time
