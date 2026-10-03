@@ -165,6 +165,27 @@ def api_diag():
     except Exception as e:
         rep["agent_reply"] = {"error": f"{type(e).__name__}: {str(e)[:100]}", "t": round(time.time() - t3, 2)}
 
+    # stage 5: tool-calling message (product_rate tool)
+    t4 = time.time()
+    try:
+        rpl2 = agent_reply("12W blub ka rate batao")
+        rep["agent_reply_tool"] = {"ok": bool(rpl2), "t": round(time.time() - t4, 2),
+                                   "reply": (rpl2 or "")[:200]}
+    except Exception as e:
+        rep["agent_reply_tool"] = {"error": f"{type(e).__name__}: {str(e)[:100]}",
+                                    "t": round(time.time() - t4, 2)}
+
+    # stage 6: full handle_message (jaise /api/chat karta hai)
+    t5 = time.time()
+    try:
+        from agents import manager
+        rpl3 = manager.handle_message("web", "12W blub ka rate batao")
+        rep["handle_message"] = {"ok": bool(rpl3), "t": round(time.time() - t5, 2),
+                                  "reply": (rpl3 or "")[:200]}
+    except Exception as e:
+        rep["handle_message"] = {"error": f"{type(e).__name__}: {str(e)[:100]}",
+                                  "t": round(time.time() - t5, 2)}
+
     rep["total_t"] = round(time.time() - t0, 2)
     return jsonify(rep)
 
