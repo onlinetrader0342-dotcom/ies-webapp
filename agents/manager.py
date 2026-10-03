@@ -74,10 +74,16 @@ def handle_message(sender, text):
     """Ek paigham ka mukammal jawab. Returns Roman Urdu string.
     Ab TAMAM jawab AI agent (Gemini + tools) deta hai — koi template nahi."""
     from tools.llm import agent_reply
-    reply = agent_reply(text)
+    try:
+        reply = agent_reply(text)
+    except Exception as e:
+        return f"AI me kharabi aa gayi: {type(e).__name__}."
     if reply:
         return reply
-    return "Maazrat, is waqt AI jawab nahi de saka. Dobara koshish karein."
+    from tools import llm as _llm
+    why = getattr(_llm, "_last_error", None) or "unknown"
+    return ("Maazrat, is waqt AI jawab nahi de saka. "
+            f"(wajah: {why}) Dobara koshish karein.")
 
 
 def _llm_fallback(text):
