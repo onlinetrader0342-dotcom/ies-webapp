@@ -147,7 +147,23 @@ GEMINI_TOOLS = [{
 _last_error = None  # aakhri API nakami ki wajah (diagnostic ke liye)
 
 
-def _call_api(payload, retries=1):
+def _call_api(payload, retries=1, hard_timeout=35):
+    """Gemini API call — HARD timeout ke sath, taake DNS ya network hang
+    bhi request ko latka na sake. Waqt par jawab na aye to None."""
+    import concurrent.futures
+    ex = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+    try:
+        fut = ex.submit(_call_api_inner, payload, retries)
+        return fut.result(timeout=hard_timeout)
+    except concurrent.futures.TimeoutError:
+        global _last_error
+        _last_error = "hard_timeout_35s"
+        return None
+    finally:
+        ex.shutdown(wait=False)
+
+
+def _call_api_inner(payload, retries):
     global _last_error
     import time
     import urllib.error
