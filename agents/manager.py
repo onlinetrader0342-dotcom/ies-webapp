@@ -72,18 +72,52 @@ def route(text):
 
 def handle_message(sender, text):
     """Ek paigham ka mukammal jawab. Returns Roman Urdu string.
-    Ab TAMAM jawab AI agent (Gemini + tools) deta hai — koi template nahi."""
+    Pehle AI agent (Gemini + tools) koshish karta hai. Agar AI ka rasta
+    band ho to dukan ka apna hisab-kitab nizam asal data se jawab deta hai
+    (ye template nahi — wahi asal rate/stock/bill jo tools nikalte hain)."""
     from tools.llm import agent_reply
     try:
         reply = agent_reply(text)
-    except Exception as e:
-        return f"AI me kharabi aa gayi: {type(e).__name__}."
+    except Exception:
+        reply = None
     if reply:
         return reply
-    from tools import llm as _llm
-    why = getattr(_llm, "_last_error", None) or "unknown"
-    return ("Maazrat, is waqt AI jawab nahi de saka. "
-            f"(wajah: {why}) Dobara koshish karein.")
+    fb = _deterministic_fallback(sender, text)
+    return fb + "\n\n(note: AI ka rasta band tha, is liye dukan ke hisab-kitab se jawab diya)"
+
+
+def _deterministic_fallback(sender, text):
+    """AI nakaam ho to route() + agents se asal data par mabni jawab."""
+    customer_id = identify_customer(sender)
+    cid = None if customer_id in (None, "owner") else customer_id
+    agent_name, intent = route(text)
+    try:
+        if agent_name == "pricing" and intent == "admin":
+            return _handle_admin(text)
+        if agent_name == "billing":
+            return billing_agent.handle(cid or 1, text, by="Azhar")
+        if agent_name == "ledger":
+            return ledger_agent.handle(cid or 1, text, by="Azhar")
+        if agent_name == "inventory":
+            return inventory_agent.handle(text, by="Azhar")
+        if agent_name == "inquiry":
+            return inquiry_agent.handle(cid, _extract_product_id(text), text)
+        if agent_name == "reports":
+            return reports_agent.handle(text)
+        if agent_name == "expense":
+            return expense_agent.handle(text, by="Azhar")
+        if agent_name == "staff":
+            return staff_agent.handle(text, by="Azhar")
+        if agent_name == "rules":
+            return rules_agent.handle(text, by="Azhar")
+        if agent_name == "planning":
+            return planning_agent.handle(text, by="Azhar")
+        if agent_name == "supplier":
+            return ("Supplier rates ke liye abhi AI darkar hai jo band hai. "
+                    "Thori dair baad dobara koshish karein.")
+    except Exception as e:
+        return f"Hisab-kitab me kharabi: {type(e).__name__}."
+    return "Samajh nahi aaya."
 
 
 def _llm_fallback(text):
