@@ -144,26 +144,38 @@ GEMINI_TOOLS = [{
 }]
 
 
-def _call_api(payload, retries=2):
+_last_error = None  # aakhri API nakami ki wajah (diagnostic ke liye)
+
+
+def _call_api(payload, retries=1):
+    global _last_error
     import time
     import urllib.error
     key = os.environ.get("GEMINI_API_KEY", "")
     if not key:
+        _last_error = "no_key"
         return None
     url = f"{BASE}/{MODEL}:generateContent?key={key}"
     for attempt in range(retries + 1):
         req = urllib.request.Request(url, data=json.dumps(payload).encode(),
                                      headers={"Content-Type": "application/json"})
         try:
-            resp = urllib.request.urlopen(req, timeout=60)
+            resp = urllib.request.urlopen(req, timeout=25)
+            _last_error = None
             return json.loads(resp.read())
         except urllib.error.HTTPError as e:
+            _last_error = f"http_{e.code}"
             if e.code == 429 and attempt < retries:
-                time.sleep(65)  # quota reset ka wait
+                time.sleep(10)  # mukhtasir wait, phir aik retry
                 continue
             return None
-        except Exception:
+        except TimeoutError:
+            _last_error = "timeout_25s"
             return None
+        except Exception as e:
+            _last_error = f"network_{type(e).__name__}"
+            return None
+    _last_error = "retries_exhausted"
     return None
 
 
